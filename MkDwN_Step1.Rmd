@@ -12,7 +12,7 @@ knit: (function(input_file, encoding) {
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE) 
 ```
 
 Aplicamos la metodología propuesta por la OCDE para evaluar el grado de urbanización de los territorios. Se clasifican Unidades Administrativas Locales en tres categorías: Ciudades, Núcleos Urbanos o  Zonas Suburbanas, y Areas Rurales (en inglés: Cities, Towns or Suburbs, and Rural Areas).

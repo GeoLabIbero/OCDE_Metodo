@@ -9,8 +9,8 @@ knit: (function(input_file, encoding) {
  encoding=encoding,
  output_file="C:/Users/DELL/Documents/ocde_methodo/docs/index.html")})
 ---
-
-
+ 
+ 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE) 
 ```

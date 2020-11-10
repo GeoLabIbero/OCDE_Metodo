@@ -6,11 +6,11 @@ date: "10/11/2020"
 knit: (function(input_file, encoding) {
   out_dir <- 'docs';
   rmarkdown::render(input_file,
- encoding=encoding,
+ encoding=encoding, 
  output_file="C:/Users/DELL/Documents/ocde_methodo/docs/index.html")})
 ---
  
- 
+   
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE) 
 ```

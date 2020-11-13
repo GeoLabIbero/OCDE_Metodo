@@ -49,7 +49,7 @@ De esta manera podemos identificar los Centros Urbanos y Clústeres Urbanos. Las
 ```{r, message=FALSE, warning=FALSE, , echo=FALSE, results=FALSE, include=TRUE, paged.print=FALSE}
 
 library(rgdal)
-library(leaflet)
+library(leaflet) 
 
 Estados<- readOGR("C:/Users/DELL/Documents/GIS/dest2019gw/dest2019gw.shp",
                   layer = "dest2019gw", GDAL1_integer64_policy = FALSE)
@@ -60,9 +60,8 @@ categ<- readOGR("F:/OCDE results/All/Post_Relleno_filtro.shp",
                 layer = "Post_Relleno_filtro", GDAL1_integer64_policy = FALSE)
 
 
-
-munstep2<- readOGR("F:/OCDE results/Step2/step2_munic.shp",
-                layer = "step2_munic", GDAL1_integer64_policy = FALSE)
+munstep2<- readOGR("C:/Users/DELL/Downloads/step2_munic_Sim/step2_munic_Sim.shp",
+                layer = "step2_munic_Sim", GDAL1_integer64_policy = FALSE)
 
 
 
@@ -137,4 +136,18 @@ categ$catstring<-gsub("1", "Centro Urbano", categ$catstring)
 table(categ$catstring)
 
 ```
+## 2. Clasificacion de Unidades Administrativas Locales
+
+
+
+
+
+
+
+
+
+
+
+
+
 

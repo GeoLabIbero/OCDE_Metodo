@@ -1,0 +1,177 @@
+---
+title: "Aplicación en México de la metodología propuesta por la OCDE para evaluar el grado de urbanización de los territorios"
+author: "Soloaga, Plassot y Reyes"
+date: "10/11/2020"
+
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding, 
+ output_file="C:/Users/DELL/Documents/ocde_methodo/docs/index.html")})
+---
+ 
+   
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE) 
+```
+
+Aplicamos la metodología propuesta por la OCDE para evaluar el grado de urbanización de los territorios. Se clasifican Unidades Administrativas Locales en tres categorías: Ciudades, Núcleos Urbanos o  Zonas Suburbanas, y Areas Rurales (en inglés: Cities, Towns or Suburbs, and Rural Areas).
+
+El método opera en dos tiempos: 1. Clasificación de celdas de 1km2; 2. Clasificación de Unidades Administrativas Locales de acuerdo a su grado de urbanización
+
+Trabajamos con datos del Censo de Población y Vivienda de 2010 (Instituto Nacional de Estadística y Geografía). Se trabajan con archivos geoespaciales para aproximar la ubicación de la población de la manera más precisa posible de acuerdo a datos oficiales. 
+
+## 1. Número de habitantes por celda de 1km2
+
+Primero se trabaja con una malla de celdas de 1km2 que cubre todo el país para identificar “Centros Urbanos”, “Clústeres Urbanos” y “Celdas Rurales”. 
+
+Tenemos puntos para localidades rurales y polígonos de manzanas para zonas urbanas. Generamos el centroide de cada manzana y se considera que la población de la manzana vive en este punto. Contamos la población en cada celda.
+
+Se considera **Centro Urbano**:
+
+- Celdas de más de 1,500 habitantes que contiguamente forman un grupo de al menos 50,000 habitantes,
+
+- Celdas con al menos cinco vecinos que forman parte de un Centro Urbano.
+
+Las celdas son contiguas si comparten el borde norte, sur, este u oeste, se excluyen las diagonales.
+
+En un último tiempo se rellenan huecos. Si una celda tiene al menos 5 de sus 8 vecinos que pertenece aun Centro Urbano entonces la celda se reasigna al Centro Urbano. En esta etapa se consideran los vecinos de las diagonales. Este proceso es iterativo.
+
+Se considera **Clúster Urbano**: 
+
+-  Celdas que no forman parte de un centro urbano pero que tienen más de 300 habitantes y que contiguamente forman un grupo de al menos 5,000 habitantes. 
+
+De esta manera podemos identificar los Centros Urbanos y Clústeres Urbanos. Las celdas restantes son consideradas “Rurales”.
+
+## 2. Clasificacion de Unidades Administrativas Locales
+
+
+En una segunda etapa se propone clasificar Unidades Administrativas Locales (UAL). En Europa se consideran nomenclaturas (NUTS) de cada país y se busca para cada país el nivel de desagregación territorial que permite una unidad comparable entre países. La metodología propone identificar dos niveles (LAU nivel 1 y 2) que serán clasificados en función de sus grados de urbanización. 
+Para México decidimos trabajar con dos niveles: el nivel municipal y un nivel inferior que generamos para fines del estudio. Este nivel inferior (LAU nivel 2) fue construido considerando los polígonos de AGEB´s Rurales y Urbanas.
+
+Se clasifica cada LAU a partir del siguiente criterio:
+
+-	Ciudades o áreas densamente pobladas: Donde al menos 50% de la población vive en uno o varios Centros Urbanos.
+
+-	Zonas suburbanas o de densidad media: Donde menos del 50% de la población vive en Centros Urbanos pero al menos 50% vive en un Clúster Urbano. 
+
+-	Áreas rurales o de densidad baja: Donde más del 50% de la población vive en celdas rurales.
+
+Replicando esta metodología 25 municipios no son clasificados en ninguna categoría.
+
+
+# Mapa 1: Clústeres y Centros Urbanos en México 
+ 
+```{r, message=FALSE, warning=FALSE, , echo=FALSE, results=FALSE, include=TRUE, paged.print=FALSE}
+
+
+library(rgdal)
+library(leaflet) 
+
+
+categ<- readOGR("F:/OCDE results/All/Post_Relleno_filtro.shp",
+                layer = "Post_Relleno_filtro", GDAL1_integer64_policy = FALSE)
+
+
+munstep2<- readOGR("C:/Users/DELL/Downloads/step2_munic_Sim/step2_munic_Sim.shp",
+                   layer = "step2_munic_Sim", GDAL1_integer64_policy = FALSE)
+
+
+
+munstep2b<- readOGR("C:/Users/DELL/Downloads/Step2_AGEB_Bueno/Step2_AGEB_SIMP.shp",
+                   layer = "Step2_AGEB_SIMP", GDAL1_integer64_policy = FALSE)
+
+
+
+catcat<-as.data.frame(categ, fileEncoding = "UTF-8")
+
+catcat$label<-as.character(catcat$POBTOT)
+
+catcat$label<-paste0("Población :", catcat$label)
+
+#RECODE
+munstep2b$step2_ageb[is.na(munstep2b$step2_ageb)]<-1
+
+
+
+p = colorFactor(palette = c("green","blue"), domain = c("Centro Urbano","Clúster Urbano"),ordered = T)
+pal1 <- colorBin(palette = c("green","blue"), domain = categ$categoria_, bins = 3)
+
+
+
+bins <- c(0, 1, 2, 3, 4)
+p_mun = colorFactor(palette = c("viridis"), domain = c("missings", "Rural","Towns", "Cities"),ordered = T)
+pal_mun <- colorBin("viridis", domain = munstep2$step2_mun_, bins = bins, reverse = FALSE)
+pal_mun
+
+labelsageb <- c("missings", "Rural","Towns", "Cities")
+
+bins2 <- c(0, 1, 2, 3, 4)
+p_ageb = colorFactor(palette = c("magenta4", "lightsteelblue", "springgreen2", "yellow"), domain = c("0", "1","2", "3"),reverse = FALSE)
+pal_ageb <- colorBin("viridis", domain = munstep2b$step2_ageb, bins = bins2, reverse = FALSE)
+pal_ageb
+
+
+
+cat <- leaflet() %>%
+  addProviderTiles("CartoDB") %>%
+  #MUNICIPIOS
+  addTiles() %>%addPolygons( dat=munstep2, color = "black", weight = 0.0, smoothFactor = 0.5,
+                             opacity = 1.0, fillOpacity = 0.8,
+                             fillColor = ~pal_mun(step2_mun_), group="2. Clasificacion de UAL (Municipios)"
+  ) %>% addLegend(position = "topleft",
+                  pal = p_mun, values = c("missings", "Rural","Towns", "Cities"),
+                  title = "2. Clasificacion de UAL")%>%
+  #AGEBs
+  addPolygons( dat=munstep2b, color = "black", weight = 0.0, smoothFactor = 0.5,
+               opacity = 0.5, fillOpacity = 0.8,
+               fillColor = ~p_ageb(step2_ageb), group="3. Clasificacion de UAL (AGEB)"
+  ) %>%
+  #Celdas
+  addPolygons( data=categ, weight = 1, smoothFactor = 0.5,
+               opacity = 1.0, fillOpacity = 0.5,
+               fillColor = ~pal1(categoria_), color = "#444444",
+               highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                   bringToFront = TRUE), 
+               label =~catcat$label, group="1. Clasificación de celdas")%>% addLegend(position = "topright",
+                                                                                      pal = p, values = c("Centro Urbano","Clúster Urbano"),
+                                                                                      title = "1. Clasificación de celdas")%>%
+  # Layers control
+  addLayersControl(
+    overlayGroups = c( "1. Clasificación de celdas" , "2. Clasificacion de UAL (Municipios)" , "3. Clasificacion de UAL (AGEB)"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
+
+
+
+ 
+
+```
+
+
+
+```{r, message=FALSE, warning=FALSE, , echo=FALSE, include=TRUE, paged.print=FALSE}
+
+cat 
+  
+```
+
+## Numero de celdas en cada categoria 
+```{r, message=FALSE, warning=FALSE, , echo=FALSE,  paged.print=FALSE}
+
+categ$catstring<-as.character(categ$categoria_)
+categ$catstring<-gsub("2", "Clúster Urbano", categ$catstring)
+categ$catstring<-gsub("1", "Centro Urbano", categ$catstring)
+table(categ$catstring)
+ 
+```
+
+
+
+
+
+
+
+
+
